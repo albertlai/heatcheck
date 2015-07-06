@@ -1,0 +1,1 @@
+Go script that pulls NBA play-by-plays from stats.nba.com and processes it to see if P(makes a shot) differs from P(makes a shot | made previous shot) for all players in the NBA. The final output is a CSV with these stasts for of all active players in the NBA
