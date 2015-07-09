@@ -10,21 +10,23 @@ import (
 
 type Stats struct {
 	jump_shots, attempts int
-	distance float64
+	distance, defender float64
 	jump_shots_1, attempts_1 int
-	distance_1 float64
+	distance_1, defender_1 float64
 	jump_shots_2, attempts_2 int
-	distance_2 float64
+	distance_2, defender_2 float64
 }
+
+const map_path = "map"
 
 func mapPlays(game_id int) error {
 	fmt.Printf(" %d ", game_id)
-	in_name := fmt.Sprintf("plays/plays_%d.json", game_id)
+	in_name := fmt.Sprintf("%s/%s/plays_%d.json", data_path, play_path, game_id)
 	in, err := os.Open(in_name)
 	if err != nil { return err }
 	defer in.Close()
 
-	out_name := fmt.Sprintf("map/map_%d.json", game_id)	
+	out_name := fmt.Sprintf("%s/%s/map_%d.json", data_path, map_path, game_id)
 	out, err := os.Create(out_name)
 	if err != nil { return err }
 	defer out.Close()

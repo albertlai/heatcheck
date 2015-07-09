@@ -6,15 +6,17 @@ import (
 	"encoding/json"
 )
 
+const play_path = "plays"
+
 // { resultSets: { rowSet: [ x[7] ] } }
 func processGameJSON(game_id int) error {
 	fmt.Printf("Processing game %d\n", game_id)
-	in_name := fmt.Sprintf("%s/game_%d.json", json_path, game_id)
+	in_name := fmt.Sprintf("%s/%s/game_%d.json", data_path, json_path, game_id)
 	in, err := os.Open(in_name)
 	if err != nil { return err }
 	defer in.Close()
 	
-	out_name := fmt.Sprintf("plays/plays_%d.json", game_id)	
+	out_name := fmt.Sprintf("%s/%s/plays_%d.json", data_path, play_path, game_id)	
 	out, err := os.Create(out_name)
 	if err != nil { return err }
 	defer out.Close()

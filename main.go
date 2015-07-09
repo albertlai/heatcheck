@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"fmt"
 	"os"
 	"runtime"
@@ -9,23 +10,33 @@ import (
 type process func(int) error
 
 var messages = make(chan string)
+var data_path string
 const num_games = 1230 // There are 1230 NBA regular season games per year
+const players_file = "players.gob"
 
 func main() {	
 	args := os.Args[1:]
-	json_path = "games"
-	
+	data_path = "data"
+
+	players_file_name := fmt.Sprintf("%s/%s", data_path, players_file)
+	if !exists(players_file_name) {
+		err := saveToDisk(fetchPlayers(), players_file_name)
+		if err != nil { panic(err) }
+	}
 	var fn process
 	if len(args) > 0 {
+		if len(args) > 1 {
+			data_path = args[1]
+		}
 		switch args[0] {
 		case "fetch":
+			makeDataPath(json_path)
 			fn = fetchGame
-			if len(args) > 1 {
-				json_path = args[1]
-			}
 		case "process":
+			makeDataPath(play_path)
 			fn = processGameJSON
 		case "map":
+			makeDataPath(map_path)
 			fn = mapPlays
 		case "reduce":
 			reducePlays()
@@ -35,11 +46,6 @@ func main() {
 	} else {
 		fmt.Printf("Usage is go run *.go [action] [outfile]\n")
 		return
-	}
-	// Make the output directory if it doesn't exist
-	if !exists(json_path) {
-		err := os.Mkdir(json_path, 0666)
-		if err != nil {	panic(err) }
 	}
 	var num_blocks = runtime.NumCPU()
 	// Set the max number of processes to the number of CPUs on this machine
@@ -80,7 +86,27 @@ func exists(f string) bool {
 	return true
 }
 
+func makeDataPath(path string) {
+	// Make the output directory if it doesn't exist
+	full_path := fmt.Sprintf("%s/%s", data_path, path)
+	if !exists(full_path) {
+		err := os.Mkdir(full_path, 0666)
+		if err != nil {	panic(err) }
+	}
+}
+
 func dummy(id int) error {
-	fmt.Printf("there are  %d dense turds\n", id)
+	fmt.Printf("there are %d dense turds\n", id)
+	return nil
+}
+
+
+func saveToDisk(data interface{}, file_name string) error {
+	outfile, err := os.Create(file_name)
+	if err != nil { return err } else {
+		defer outfile.Close()
+		dataEncoder := gob.NewEncoder(outfile)
+		return dataEncoder.Encode(data)
+	}
 	return nil
 }

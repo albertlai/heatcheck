@@ -10,13 +10,12 @@ import (
 )
 
 func reducePlays() {
-	path := "map"
-	files, err := ioutil.ReadDir(path)
+	files, err := ioutil.ReadDir(fmt.Sprintf("%s/%s", data_path, map_path))
 	if err != nil { panic(err) }
 	var stats_map map[string]*Stats = make(map[string]*Stats)
 	for i := 0; i < len(files); i++ {
 		file_info := files[i]
-		in_name := fmt.Sprintf("%s/%s", path, file_info.Name())
+		in_name := fmt.Sprintf("%s/%s/%s", data_path, map_path, file_info.Name())
 		in, err := os.Open(in_name)
 		fmt.Printf("opening %s\n", in_name)
 		if err != nil {
@@ -64,7 +63,7 @@ func reducePlays() {
 		}
 	}
 
-	out_name := "stats.csv"
+	out_name := fmt.Sprintf("%s/stats.csv", data_path)
 	out, err := os.Create(out_name)
 	if err != nil { panic(err) }
 	defer out.Close()
