@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 )
@@ -75,7 +76,11 @@ func fetchShots(player_id int, name string) Stats {
 	stats = Stats{Name: name}
 	
 	var current_game string
-	var made_1, made_2 bool	
+	var made_1, made_2 bool
+	var distanceSq, defenderSq float64
+	var distanceSq1, defenderSq1 float64
+	var distanceSq2, defenderSq2 float64
+	
 	process_shots := func (row []interface{}) {
 		game_id := row[0].(string)
 		if game_id != current_game {
@@ -92,16 +97,24 @@ func fetchShots(player_id int, name string) Stats {
 			stats.JumpShots += made
 			stats.Distance += distance
 			stats.Defender += defender
+			dSq := distance * distance
+			defSq := defender * defender
+			distanceSq += dSq
+			defenderSq += defSq
 			if made_1 {
 				stats.Attempts1 += 1
 				stats.JumpShots1 += made
 				stats.Distance1 += distance
 				stats.Defender1 += defender
+				distanceSq1 += dSq
+				defenderSq1 += defSq
 				if made_2 {
 					stats.Attempts2 += 1
 					stats.JumpShots2 += made
 					stats.Distance2 += distance
 					stats.Defender2 += defender
+					distanceSq2 += dSq
+					defenderSq2 += defSq
 				}
 			}
 			made_2 = made_1
@@ -111,13 +124,33 @@ func fetchShots(player_id int, name string) Stats {
 	url := fmt.Sprintf(shots_url, player_id, season_name)
 	err := processNBAResponse(url, process_shots)
 	if err != nil { panic(err) } else {
-		stats.Defender = stats.Defender / float64(stats.Attempts)
-		stats.Distance = stats.Distance / float64(stats.Attempts)
-		stats.Defender1 = stats.Defender1 / float64(stats.Attempts1)
-		stats.Distance1 = stats.Distance1 / float64(stats.Attempts1)
-		stats.Defender2 = stats.Defender2 / float64(stats.Attempts2)
-		stats.Distance2 = stats.Distance2 / float64(stats.Attempts2)
+		n := float64(stats.Attempts)
+		n1 := float64(stats.Attempts1)
+		n2 := float64(stats.Attempts2)
+		if n != 0 {			
+			stats.Defender = stats.Defender / n
+			stats.DefenderSD = sd(defenderSq, stats.Defender, n)
+			stats.Distance = stats.Distance / n
+			stats.DistanceSD = sd(distanceSq, stats.Distance, n)
+		}
+		if n1 != 0 {
+			stats.Defender1 = stats.Defender1 / n1
+			stats.DefenderSD1 = sd(defenderSq1, stats.Defender1, n1)
+			stats.Distance1 = stats.Distance1 / n1
+			stats.DistanceSD1 = sd(distanceSq1, stats.Distance1, n1)
+		}
+		if n2 != 0 {
+			stats.Defender2 = stats.Defender2 / n2
+			stats.DefenderSD2 = sd(defenderSq2, stats.Defender1, n2)
+			stats.Distance2 = stats.Distance2 / n2
+			stats.DistanceSD2 = sd(distanceSq2, stats.Distance2, n2)
+		}
 		saveToDisk(stats, shots_file_name)
 		return stats
 	}
+}
+
+// Gets the standard deviation 
+func sd(Sx2 float64, Ex float64, n float64) float64 {
+	return math.Sqrt(Sx2 / n - Ex * Ex)
 }
