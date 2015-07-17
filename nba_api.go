@@ -30,7 +30,7 @@ func processNBAResponse(url string, row_processor RowProcessor) error {
 		if exists && len(results) > 0 {
 			rowSetContainer := results[0].(map[string]interface{})
 			if rows, exists := rowSetContainer["rowSet"].([]interface{}); exists {
-				fmt.Printf("rowset exists with %d rows\n\n", len(rows))
+				fmt.Printf("rowset exists with %d rows\n", len(rows))
 				for i := 0; i < len(rows); i++ {
 					if row, exists := rows[i].([]interface{}); exists {
 						row_processor(row)
@@ -68,7 +68,7 @@ func fetchPlayers() []Player {
 func fetchShots(player_id int, name string) Stats {
 	fmt.Printf("Fetching shots for %s on pid %d\n", name, os.Getpid())
 	var stats Stats
-	shots_file_name := fmt.Sprintf("%s/shots/%d.gob", data_path, player_id)
+	shots_file_name := fmt.Sprintf("%s/stats/%d.gob", season_path, player_id)
 	if exists(shots_file_name) {
 		loadFromDisk(&stats, shots_file_name)
 		return stats
@@ -145,7 +145,8 @@ func fetchShots(player_id int, name string) Stats {
 			stats.Distance2 = stats.Distance2 / n2
 			stats.DistanceSD2 = sd(distanceSq2, stats.Distance2, n2)
 		}
-		saveToDisk(stats, shots_file_name)
+		err := saveToDisk(stats, shots_file_name)
+		if err != nil { panic(err) }
 		return stats
 	}
 }
