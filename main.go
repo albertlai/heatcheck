@@ -99,16 +99,18 @@ func combineStats(data_path string) {
 			dir := fmt.Sprintf("%s/%s/stats", data_path, f.Name())
 			files, _ := ioutil.ReadDir(dir)
 			for _, p_file := range files {
-				file_name := fmt.Sprintf("%s/%s", dir, p_file.Name())
-				zero(&stats)
-				err := loadFromDisk(&stats, file_name)
-				if err != nil { panic(err) }
-				name := stats.Name
-				player, ok := player_map[name]
-				if ok {
-					stats = add(stats, player)
+				if p_file.Name()[0] != '.' {
+					file_name := fmt.Sprintf("%s/%s", dir, p_file.Name())
+					zero(&stats)
+					err := loadFromDisk(&stats, file_name)
+					if err != nil { fmt.Println(file_name); panic(err) }
+					name := stats.Name
+					player, ok := player_map[name]
+					if ok {
+						stats = add(stats, player)
+					}
+					player_map[name] = stats
 				}
-				player_map[name] = stats
 			}
 		}
 	}

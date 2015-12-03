@@ -65,15 +65,20 @@ func fetchPlayers() []Player {
 //  "PERIOD","GAME_CLOCK","SHOT_CLOCK","DRIBBLES","TOUCH_TIME","SHOT_DIST",
 //  "PTS_TYPE","SHOT_RESULT","CLOSEST_DEFENDER","CLOSEST_DEFENDER_PLAYER_ID",
 //  "CLOSE_DEF_DIST","FGM","PTS"]
-func fetchShots(player_id int, name string) Stats {
-	fmt.Printf("Fetching shots for %s on pid %d\n", name, os.Getpid())
+func fetchShots(player_id int, name string) Stats {	
 	var stats Stats
 	shots_file_name := fmt.Sprintf("%s/stats/%d.gob", season_path, player_id)
 	if exists(shots_file_name) {
 		loadFromDisk(&stats, shots_file_name)
 		return stats
 	}
-	stats = Stats{Name: name}
+	fmt.Printf("Fetching shots for %s on pid %d\n", name, os.Getpid())
+	stats = Stats{
+		Name: name,
+		DistanceMap: make(Histogram),
+		DistanceMap1: make(Histogram),
+		DistanceMap2: make(Histogram),
+	}
 	
 	var current_game string
 	var made_1, made_2 bool
@@ -96,6 +101,7 @@ func fetchShots(player_id int, name string) Stats {
 			stats.Attempts += 1
 			stats.JumpShots += made
 			stats.Distance += distance
+			stats.DistanceMap.AddDistance(int(distance), made)
 			stats.Defender += defender
 			dSq := distance * distance
 			defSq := defender * defender
@@ -105,6 +111,7 @@ func fetchShots(player_id int, name string) Stats {
 				stats.Attempts1 += 1
 				stats.JumpShots1 += made
 				stats.Distance1 += distance
+				stats.DistanceMap1.AddDistance(int(distance), made)
 				stats.Defender1 += defender
 				distanceSq1 += dSq
 				defenderSq1 += defSq
@@ -112,6 +119,7 @@ func fetchShots(player_id int, name string) Stats {
 					stats.Attempts2 += 1
 					stats.JumpShots2 += made
 					stats.Distance2 += distance
+					stats.DistanceMap2.AddDistance(int(distance), made)
 					stats.Defender2 += defender
 					distanceSq2 += dSq
 					defenderSq2 += defSq
